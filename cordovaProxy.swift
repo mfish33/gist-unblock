@@ -10,7 +10,7 @@ import WebKit
 
 @objc class SwLoader: CDVPlugin {
     
-    var stoppedTasks = NSMutableArray()
+    var stoppedTasks = NSMutableDictionary()
     
     override func pluginInitialize() {
         print("SwLoader plugin initialized")
@@ -27,8 +27,9 @@ import WebKit
         let base = Bundle.main.bundleURL.appendingPathComponent("www")
         let deviceLocation = base.appendingPathComponent(webViewTarget)
         let task = URLSession.shared.dataTask(with: deviceLocation) { [self] (data,response,error) in
-            if stoppedTasks.contains(urlSchemeTask) {
+            if stoppedTasks[urlSchemeTask.hash] != nil {
                 print("Url Scheme tasked stoped while request was in flight")
+                stoppedTasks.removeObject(forKey: urlSchemeTask.hash)
             } else if error != nil {
                 urlSchemeTask.didFailWithError(error!)
             } else {
@@ -48,7 +49,7 @@ import WebKit
     }
     
     @objc func stopSchemeTask(_ urlSchemeTask:WKURLSchemeTask) {
-        stoppedTasks.add(urlSchemeTask)
+        stoppedTasks[urlSchemeTask.hash] = urlSchemeTask
     }
     
     @objc func log(_ command:CDVInvokedUrlCommand) {
